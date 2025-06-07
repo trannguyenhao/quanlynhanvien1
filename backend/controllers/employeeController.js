@@ -15,6 +15,27 @@ exports.getEmployees = async (req, res) => {
   }
 };
 
+exports.getEmployeeById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input('id', sql.Int, id)
+      .query(`
+        SELECT e.*, u.username 
+        FROM Employees e 
+        JOIN Users u ON e.user_id = u.user_id 
+        WHERE e.employee_id = @id
+      `);
+    if (result.recordset.length === 0) {
+      return res.status(404).json({ message: 'Nhân viên không tồn tại' });
+    }
+    res.json(result.recordset[0]);
+  } catch (err) {
+    res.status(500).json({ message: 'Lỗi server', error: err.message });
+  }
+};
+
 exports.createEmployee = async (req, res) => {
   const {
     username, password, full_name, gender, dob, phone, email, address,
